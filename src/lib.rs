@@ -90,7 +90,7 @@ where
             | ConfigBitFlags::RDS
             | ConfigBitFlags::NEW
             | ConfigBitFlags::ENABLE;
-        let tuning = TuningBitFlag::BAND_87_108_MHZ | TuningBitFlag::SPACE_100_KHZ;
+        let tuning = TuningBitFlag::BAND_76_108_MHZ | TuningBitFlag::SPACE_100_KHZ;
         self.write_register(Register::RDA5807M_REG_CONFIG, config)?;
         self.write_register(Register::RDA5807M_REG_TUNING, tuning)
     }
@@ -251,6 +251,23 @@ where
     pub fn get_status(&mut self) -> Result<StatusRegister, Error<E>> {
         let status_flag = self.read_register(Register::RDA5807M_REG_STATUS)?;
         Ok(StatusRegister::from_u16(status_flag))
+    }
+
+    pub fn get_rds_registers(&mut self) -> Result<[u16; 4], Error<E>> {
+        Ok([
+            self.read_register(Register::RDA5807M_REG_RDSA)?,
+            self.read_register(Register::RDA5807M_REG_RDSB)?,
+            self.read_register(Register::RDA5807M_REG_RDSC)?,
+            self.read_register(Register::RDA5807M_REG_RDSD)?,
+        ])
+    }
+
+    pub fn get_block_errors(&mut self) -> Result<(u8, u8), Error<E>> {
+        let reg = self.read_register(Register::RDA5807M_REG_RSSI)? as u8;
+        let blera = (reg >> 2) & 0b11;
+        let blerb = reg & 0b11;
+
+        Ok((blera, blerb))
     }
 }
 
